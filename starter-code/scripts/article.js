@@ -1,6 +1,6 @@
 'use strict';
 
-function Article (opts) {
+function Article(opts) {
   this.author = opts.author;
   this.authorUrl = opts.authorUrl;
   this.title = opts.title;
@@ -16,10 +16,10 @@ function Article (opts) {
 // the prototype, as that would only be relevant to a single instantiated Article.
 Article.all = [];
 
-Article.prototype.toHtml = function() {
+Article.prototype.toHtml = function () {
   let template = Handlebars.compile($('#article-template').text());
 
-  this.daysAgo = parseInt((new Date() - new Date(this.publishedOn))/60/60/24/1000);
+  this.daysAgo = parseInt((new Date() - new Date(this.publishedOn)) / 60 / 60 / 24 / 1000);
   this.publishStatus = this.publishedOn ? `published ${this.daysAgo} days ago` : '(draft)';
   this.body = marked(this.body);
 
@@ -33,30 +33,38 @@ Article.prototype.toHtml = function() {
 // REVIEW: This function will take the rawData, how ever it is provided,
 // and use it to instantiate all the articles. This code is moved from elsewhere, and
 // encapsulated in a simply-named function for clarity.
-Article.loadAll = function(rawData) {
-  rawData.sort(function(a,b) {
+Article.loadAll = function (rawData) {
+  rawData.sort(function (a, b) {
     return (new Date(b.publishedOn)) - (new Date(a.publishedOn));
   });
 
-  rawData.forEach(function(ele) {
+  rawData.forEach(function (ele) {
     Article.all.push(new Article(ele));
   })
 }
 
 // This function will retrieve the data from either a local or remote source,
 // and process it, then hand off control to the View.
-Article.fetchAll = function() {
+Article.fetchAll = function () {
   if (localStorage.rawData) {
+
     // When rawData is already in localStorage,
     // we can load it with the .loadAll function above,
     // and then render the index page (using the proper method on the articleView object).
-    Article.loadAll(?); //TODO: What do we need to pass in to Article.loadAll()?
+    Article.loadAll(JSON.parse(localStorage.rawData)); //TODO: What do we need to pass in to Article.loadAll()?
     //TODO: What method do we call to render the index page?
-  } else {
+  
+} else {
+    $.getJSON("data/hackerIpsum.json", function (json) {
+      console.log("JSON data: ", json);
+      localStorage.setItem("rawData", JSON.stringify(json));
+    });
+
     // TODO: When we don't already have the rawData,
     // we need to retrieve the JSON file from the server with AJAX (which jQuery method is best for this?),
     // cache it in localStorage so we can skip the server call next time,
     // then load all the data into Article.all with the .loadAll function above,
     // and then render the index page.
   }
+     articleView.initIndexPage();
 }
