@@ -44,36 +44,49 @@ Article.loadAll = function (rawData) {
 }
 
 
-Article.checkEtag = function () {
-  $.ajax({
-        type: 'HEAD',
-       url: 'data/hackerIpsum.json'
-    }).done(function(message,text,xhr){
-     let etag = xhr.getResponseHeader('ETag');
-    });  
-    if (){
-      
-    }
-}
+Article.checkETag = function () {
+  // get etag already in local storage
+  var existingEtag = localStorage.getItem('ETAG');
+  console.log('existing e tag: ', existingEtag);
+  var etag;
 
+  $.ajax({
+    type: 'HEAD',
+    url: 'data/hackerIpsum.json',
+    success: function (data, message, xhr) {
+      etag = xhr.getResponseHeader('ETag');
+      console.log('e tag:', etag);
+      // check if etg is not null and diff
+      if (etag !== existingEtag) {
+        // kill the old local storage
+        localStorage.removeItem('rawData');
+        console.log('removed raw data from local storage');
+      }
+      // set the etag
+      localStorage.setItem('ETAG', etag);
+      // create a new local storage from current data
+      Article.fetchAll();
+    }
+  });
+}
 
 
 
 // This function will retrieve the data from either a local or remote source,
 // and process it, then hand off control to the View.
 Article.fetchAll = function () {
-    if (localStorage.rawData) {
-      // console.log("rawdata stringify = ", JSON.stringify(localStorage.rawData));
+  if (localStorage.rawData) {
+    // console.log("rawdata stringify = ", JSON.stringify(localStorage.rawData));
     // When rawData is already in localStorage,
     // we can load it with the .loadAll function above,
     // and then render the index page (using the proper method on the articleView object).
     Article.loadAll(JSON.parse(localStorage.rawData)); //TODO: What do we need to pass in to Article.loadAll()?
     //TODO: What method do we call to render the index page?
-  
-} else {
-    $.getJSON("data/hackerIpsum.json", function (json) {
-      console.log("JSON data: ", json);
-      localStorage.setItem("rawData", JSON.stringify(json));
+
+  } else {
+    $.getJSON('data/hackerIpsum.json', function (json) {
+      console.log('JSON data: ', json);
+      localStorage.setItem('rawData', JSON.stringify(json));
     });
 
     // TODO: When we don't already have the rawData,
@@ -82,5 +95,5 @@ Article.fetchAll = function () {
     // then load all the data into Article.all with the .loadAll function above,
     // and then render the index page.
   }
-     articleView.initIndexPage();
+  articleView.initIndexPage();
 }
